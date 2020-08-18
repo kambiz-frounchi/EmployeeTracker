@@ -1,6 +1,7 @@
 const mysql = require(`mysql`);
 const inquirer = require(`inquirer`);
 const consoleTable = require(`console.table`);
+const employeeTrackerSql = new (require(`./employeeTrackerSql`));
 
 const entryPointQuestion = {
     type: `list`,
@@ -23,14 +24,59 @@ const entryPointQuestion = {
     ]
 };
 
-const prompt = () => {
+const departmentQuestion = {
+    type: `input`,
+    name: `departmentName`,
+    message: `what is the name of the department?`,
+};
+
+const roleQuestions = [
+    {
+        type: `input`;
+        name: `title`,
+        message : `what is the title?`
+    },
+    {
+        type: `input`,
+        name: `salary`,
+        message : `what is the salary?`
+    },
+    {
+        type: `input`;
+        name: `departmentName`,
+        message : `what department does this role pertain to?`
+    }
+];
+
+const prompt = async () => {
     inquirer.prompt(entryPointQuestion).then((answers) => {
-        const employeeTrackerSql = new EmployeeTrackerSql();
-        switch (employeeTrackerSql) {
+        switch (answers.entryPoint) {
+            case `view all departments`:
+                employeeTrackerSql.viewDepartments((results) => {
+                    consoleTable(results);
+                });
+                break;
+            case `view all roles`:
+                employeeTrackerSql.viewRoles((results) => {
+                    consoleTable(results);
+                });
+                break;
+            case `view all employees`:
+                employeeTrackerSql.viewEmployees((results) => {
+                    consoleTable(results);
+                });                
+                break;
+            case `add department`:
+                const answers = await inquirer.prompt([departmentQuestion]);
+                if (answers.departmentName) {
+                    employeeTrackerSql.addDepartment(answers.departmentName);
+                }
+                break;
+            case `add role`:
+
+                employeeTrackerSql.addRole()
             
-        }
-        if (answers.entryPoint === `view`) {
-    
+            
         }
     });
     
@@ -40,7 +86,7 @@ const connection = mysql.createConnection ({
     host : `localhost`,
     port : 3306,
     user: `root`,
-    password: `Kambiz82`,
+    password: `Kambiz83`,
     database: `employeeDb`
 });
 

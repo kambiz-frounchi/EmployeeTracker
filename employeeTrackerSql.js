@@ -72,7 +72,9 @@ class EmployeeTrackerSql {
         const queryString = "SELECT * FROM departments";
         this.connection.query(queryString, (err, results) => {
             if (err) throw err;
-            cb(results);
+            if (cb) {
+                cb(results);
+            }
         });
     }
 
@@ -80,7 +82,9 @@ class EmployeeTrackerSql {
         const queryString = "SELECT * FROM roles";
         this.connection.query(queryString, (err, results) => {
             if (err) throw err;
-            cb(results);
+            if (cb) {
+                cb(results);
+            }
         });
     }
 
@@ -88,7 +92,9 @@ class EmployeeTrackerSql {
         const queryString = "SELECT * FROM employees";
         this.connection.query(queryString, (err, results) => {
             if (err) throw err;
-            cb(results);
+            if (cb) {
+                cb(results);
+            }
         });
     }
 
@@ -123,7 +129,9 @@ class EmployeeTrackerSql {
             queryString = "SELECT * from employees WHERE ?";
             this.connection.query(queryString, [{manager_id : results[0].id}], (err, results) => {
                 if (err) throw err;
-                cb(results);
+                if (cb) {
+                    cb(results);
+                }
             });
         });
     }
@@ -140,8 +148,11 @@ class EmployeeTrackerSql {
                 sum += employeeSalary;
             });
 
-            cb(sum);
+            if (cb) {
+                cb(sum);
+            }
         });
     }
 }
-    
+
+module.exports = EmployeeTrackerSql;
