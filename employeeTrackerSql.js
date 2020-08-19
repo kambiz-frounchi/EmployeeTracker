@@ -153,6 +153,10 @@ class EmployeeTrackerSql {
             }
         });
     }
+
+    viewManagersByDepartment() {
+        
+    }
 }
 
 module.exports = EmployeeTrackerSql;
