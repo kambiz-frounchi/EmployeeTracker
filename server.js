@@ -92,7 +92,7 @@ const prompt = async () => {
                 const salary = answers.salary;
                 const departments = await employeeTrackerSql.viewDepartments();
                 answers = await inquirer.prompt({
-                    type: `list`,
+                    type: `input`,
                     name: `department`,
                     message: `which department does this role belong to?`,
                     choices: departments
@@ -107,7 +107,7 @@ const prompt = async () => {
                 const roles = await employeeTrackerSql.viewRoles();
                 const titles = roles.map((role) => {return role.title});
                 answers = await inquirer.prompt({
-                    type: `list`,
+                    type: `input`,
                     name: `title`,
                     message: `what is the title of this employee?`,
                     choices: titles
@@ -120,17 +120,43 @@ const prompt = async () => {
                 const managerNames = managers.map((manager) => {return `${manager.first_name} ${manager.last_name}`});
 
                 answers = await inquirer.prompt({
-                    type: `list`,
+                    type: `input`,
                     name: `manager`,
                     message: `what is the name of the employee's manager?`,
                     choices: managerNames
                 });
 
                 const employeeManagerNames = managerNames.split();
-
-
                 employeeTrackerSql.addEmployee(answers.firstName, answers.lastName, title,
                                                employeeManagerNames[0], employeeManagerNames[1]);
+                break;
+            case `update employee role`:
+                const answers = await inquirer.prompt([
+                    {
+                        type: `input`,
+                        name: `firstName`,
+                        message: `what is the first name of the employee?`
+                    },
+                    {
+                        type: `input`,
+                        name: `lastName`,
+                        message: `what is the last name of the employee?`
+                    }
+                ]);
+
+                const roles = await employeeTrackerSql.viewRoles();
+                const titles = roles.map((role) => {return role.title});
+                answers = await inquirer.prompt({
+                    type: `input`,
+                    name: `title`,
+                    message: `what is the new title of this employee?`,
+                });
+                
+                const title = answers.title;
+
+                employeeTrackerSql.updateEmployeeRole()
+                break;
+            case `update employee manager`:
                 break;
             
             default:
