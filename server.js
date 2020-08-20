@@ -53,13 +53,20 @@ const employeeQuestions = [
         type: `input`,
         name: `lastName`,
         message : `what is the employee's last name?`
+    } 
+];
+
+const managerQuestions = [
+    {
+        type: `input`,
+        name: `firstName`,
+        message : `what is the employee's new manager's first name?`
     },
     {
         type: `input`,
-        name: `managerFirstName`,
-        message : `what is the employee's manager?`
+        name: `lastName`,
+        message : `what is the employee's new manager's last name?`
     }
-
 ];
 
 const prompt = async () => {
@@ -144,6 +151,8 @@ const prompt = async () => {
                     }
                 ]);
 
+                const firstName = answers.firstName;
+                const lastName = answers.lastName;
                 const roles = await employeeTrackerSql.viewRoles();
                 const titles = roles.map((role) => {return role.title});
                 answers = await inquirer.prompt({
@@ -154,18 +163,86 @@ const prompt = async () => {
                 
                 const title = answers.title;
 
-                employeeTrackerSql.updateEmployeeRole()
+                employeeTrackerSql.updateEmployeeRole(firstName, lastName, title);
                 break;
             case `update employee manager`:
+                const answers = await inquirer.prompt(employeeQuestions);
+
+                const firstName = answers.firstName;
+                const lastName = answers.lastName;
+
+                answers = await inquirer.prompt(managerQuestions);
+
+                const managerFirstName = answers.managerFirstName;
+                const managerLastName = answers.managerLastName;
+                
+                employeeTrackerSql.updateEmployeeManager(firstName, lastName, managerFirstName, managerLastName);
                 break;
-            
+            case `view employees by manager`:
+                const answers = await inquirer.prompt(managerQuestions);
+
+                const managerFirstName = answers.managerFirstName;
+                const managerLastName = answers.managerLastName;
+                
+                employeeTrackerSql.viewEmployeesByManager(managerFirstName, managerLastName, (results) => {
+                    consoleTable(results);
+                });
+                break;
+            case `delete department`:
+                const departments = await employeeTrackerSql.viewDepartments();
+                const departmentNames = departments.map((department) => {return department.name});
+                const answers = await inquirer.prompt({
+                    type: `input`,
+                    name: `department`,
+                    message: `which department do you intend to delete?`,
+                    choices: departmentNames
+                });
+
+                employeeTrackerSql.removeDepartment(answers.department);
+                break;
+            case `delete role`:
+                const roles = await employeeTrackerSql.viewRoles();
+                const titles = departments.map((role) => {return role.title});
+                const answers = await inquirer.prompt({
+                    type: `input`,
+                    name: `title`,
+                    message: `which title do you intend to delete?`,
+                    choices: titles
+                });
+
+                employeeTrackerSql.removeRole(answers.title);
+                break;
+            case `delete employee`:
+                const employees = await employeeTrackerSql.viewEmployees();
+                const employeeNames = employees.map((employee) => {return `${employee.first_name} ${employee.last_name}`});
+
+                answers = await inquirer.prompt({
+                    type: `input`,
+                    name: `employee`,
+                    message: `what is the name of the employee?`,
+                    choices: employeeNames
+                });
+
+                const employeeNamesArray = employeeNames.split();
+                employeeTrackerSql.removeEmployee(employeeNamesArray[0], employeeNamesArray[1]);
+                break;
+            case `view total utilized department budget`:
+                const departments = await employeeTrackerSql.viewDepartments();
+                const departmentNames = departments.map((department) => {return department.name});
+                const answers = await inquirer.prompt({
+                    type: `input`,
+                    name: `department`,
+                    message: `which department?`,
+                    choices: departmentNames
+                });
+
+                employeeTrackerSql.viewDepartmentBudget(answers.departmentName);
+                break;
             default:
                 break;
-            }
-                
+            }          
         }
-    });
-    
+    );
 }
 
 const connection = mysql.createConnection ({
