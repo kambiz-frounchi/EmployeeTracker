@@ -73,19 +73,22 @@ const prompt = async () => {
     inquirer.prompt(entryPointQuestion).then((answers) => {
         switch (answers.entryPoint) {
             case `view all departments`:
-                employeeTrackerSql.viewDepartments((results) => {
+                employeeTrackerSql.viewDepartments()
+                .then((results) => {
                     consoleTable(results);
                 });
                 break;
             case `view all roles`:
-                employeeTrackerSql.viewRoles((results) => {
+                employeeTrackerSql.viewRoles()
+                .then((results) => {
                     consoleTable(results);
                 });
                 break;
             case `view all employees`:
-                employeeTrackerSql.viewEmployees((results) => {
+                employeeTrackerSql.viewEmployees()
+                .then((results) => {
                     consoleTable(results);
-                });                
+                });     
                 break;
             case `add department`:
                 const answers = await inquirer.prompt([departmentQuestion]);

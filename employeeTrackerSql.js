@@ -68,33 +68,33 @@ class EmployeeTrackerSql {
         });
     }
 
-    viewDepartments(cb) {
+    viewDepartments() {
         const queryString = "SELECT * FROM departments";
-        this.connection.query(queryString, (err, results) => {
-            if (err) throw err;
-            if (cb) {
-                cb(results);
-            }
+        return new Promise((resolve, reject) => {
+            this.connection.query(queryString, (err, results) => {
+                if (err) return reject(err);
+                resolve(results);
+            });
         });
     }
 
-    viewRoles(cb) {
+    viewRoles() {
         const queryString = "SELECT * FROM roles";
-        this.connection.query(queryString, (err, results) => {
-            if (err) throw err;
-            if (cb) {
-                cb(results);
-            }
+        return new Promise((resolve, reject) => {
+            this.connection.query(queryString, (err, results) => {
+                if (err) return reject(err);
+                resolve(results);
+            });
         });
     }
 
-    viewEmployees(cb) {
+    viewEmployees() {
         const queryString = "SELECT * FROM employees";
-        this.connection.query(queryString, (err, results) => {
-            if (err) throw err;
-            if (cb) {
-                cb(results);
-            }
+        return new Promise((resolve, reject) => {
+            this.connection.query(queryString, (err, results) => {
+                if (err) return reject(err);
+                resolve(results);
+            });
         });
     }
 
@@ -122,18 +122,18 @@ class EmployeeTrackerSql {
         });        
     }
 
-    viewEmployeesByManager(managerFirstName, managerLastName, cb) {
-        const queryString = "SELECT (id) FROM employees WHERE ? AND ?";
-        this.connection.query(queryString, [{"first_name" : managerFirstName}, {"last_name" : managerLastName}], (err, results) => {
-            if (err) throw err;
-            queryString = "SELECT * from employees WHERE ?";
-            this.connection.query(queryString, [{manager_id : results[0].id}], (err, results) => {
-                if (err) throw err;
-                if (cb) {
-                    cb(results);
-                }
+    viewEmployeesByManager(managerFirstName, managerLastName) {
+        return new Promise((resolve, reject) => {
+            const queryString = "SELECT (id) FROM employees WHERE ? AND ?";
+            this.connection.query(queryString, [{"first_name" : managerFirstName}, {"last_name" : managerLastName}], (err, results) => {
+                if (err) return reject(err);
+                queryString = "SELECT * from employees WHERE ?";
+                this.connection.query(queryString, [{manager_id : results[0].id}], (err, results) => {
+                    if (err) return reject(err);
+                    resolve(results);
+                });
             });
-        });
+        });       
     }
 
     /*
@@ -154,8 +154,8 @@ class EmployeeTrackerSql {
         });
     }
 
-    viewManagersByDepartment() {
-        
+    viewManagersByDepartment(department) {
+
     }
 }
 
