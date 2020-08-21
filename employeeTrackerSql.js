@@ -147,15 +147,17 @@ class EmployeeTrackerSql {
             results.forEach((employeeSalary) => {
                 sum += employeeSalary;
             });
-
-            if (cb) {
-                cb(sum);
-            }
         });
     }
 
-    viewManagersByDepartment(department) {
-
+    viewManagersByDepartment(departmentName) {
+        return new Promise((resolve, reject) => {
+            const queryString = "SELECT (employees.first_name, employees.last_name FROM employees LEFT JOIN roles ON ? LEFT JOIN departments ON ? WHERE ? AND employees.manager_id IS NULL";
+            this.connection.query(queryString, [{"employees.role_id" : "roles.id"}, {"roles.department_id" : "departments.id"}, {"departments.name" : departmentName}], (err, results) => {
+                if (err) return reject(err);
+                resolve(results);
+            });
+        });
     }
 }
 
