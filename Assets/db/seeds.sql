@@ -1,3 +1,5 @@
+USE employee_managementDB;
+
 INSERT INTO departments (name) VALUES ("R&D");
 INSERT INTO departments (name) VALUES ("Finance");
 INSERT INTO departments (name) VALUES ("Legal");

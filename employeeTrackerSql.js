@@ -9,45 +9,52 @@ class EmployeeTrackerSql {
    addDepartment(name) {
        const queryString = "INSERT INTO departments SET ?";
        const post = {name : name};
-       connection.query(queryString, post, (err, results) => {
+       this.connection.query(queryString, post, (err, results) => {
             if (err) throw err;
        });
    }
 
     addRole(title, salary, departmentName) {
-        const queryString = "SELECT (id) FROM departments WHERE ?";
-        this.connection.query(queryString, [{title : title}], (err, results) => {
-            if (err) throw err;
-            queryString = "INSERT INTO departments SET ?";
-            const post = {title: title, salary: salary, department_id: results[0]};
-            connection.query(queryString, post, (err, results) => {
-                if (err) throw err;
+         return new Promise((resolve, reject) => {
+            let queryString = "SELECT (id) FROM departments WHERE ?";
+            this.connection.query(queryString, [{name : departmentName}], (err, results) => {
+                if (err) reject(err);
+                queryString = "INSERT INTO roles SET ?";
+                const post = {title: title, salary: salary, department_id: results[0].id};
+                this.connection.query(queryString, post, (err, results) => {
+                    if (err) reject(err);
+                    resolve();
+                });
             });
         });
     }
 
     addEmployee(firstName, lastName, title, managerFirstName, managerLastName) {
-        const queryString = "SELECT (id) FROM roles WHERE ?";
-        this.connection.query(queryString, {title : title}, (err, results) => {
-            if (err) throw err;
-            const roleId = results[0];
-            queryString = "SELECT (id) FROM employees WHERE ? AND ?";
-            this.connection.query(queryString, [{first_name : managerFirstName}, {last_name : managerLastName }], (err, results) => {
-                if (err) throw err;
-                const managerId = results[0];
-                const queryString = "INSERT INTO employees SET ?";
-                const post = {first_name: first_name, last_name : last_name, role_id: roleId, manager_id: managerId};
-                this.connection.query(queryString, post, (err, results) => {
-                    if (err) throw err;
+        console.log(firstName, lastName, title, managerFirstName, managerLastName);
+        return new Promise((resolve, reject) => { 
+            let queryString = "SELECT (id) FROM roles WHERE ?";
+            this.connection.query(queryString, {title : title}, (err, results) => {
+                if (err) return reject(err);
+                const roleId = results[0].id;
+                queryString = "SELECT (id) FROM employees WHERE ? AND ?";
+                this.connection.query(queryString, [{first_name : managerFirstName}, {last_name : managerLastName}], (err, results) => {
+                    if (err) return reject(err);
+                    const managerId = results[0].id;
+                    const queryString = "INSERT INTO employees SET ?";
+                    const post = {first_name: firstName, last_name : lastName, role_id: roleId, manager_id: managerId};
+                    this.connection.query(queryString, post, (err, results) => {
+                        if (err) return reject(err);
+                        resolve();
+                    });
                 });
-            });       
+            });
         });
     }
 
     removeDepartment(name) {
         const queryString = "DELETE FROM departments WHERE ?";
         const post = {name : name};
-        connection.query(queryString, post, (err, results) => {
+        this.connection.query(queryString, post, (err, results) => {
              if (err) throw err;
         });
     }
@@ -55,7 +62,7 @@ class EmployeeTrackerSql {
     removeRole(title) {
         const queryString = "DELETE FROM roles WHERE ?";
         const post = {title : title};
-        connection.query(queryString, post, (err, results) => {
+        this.connection.query(queryString, post, (err, results) => {
              if (err) throw err;
         });
     }
@@ -63,7 +70,7 @@ class EmployeeTrackerSql {
     removeEmployee(firstName, lastName) {
         const queryString = "DELETE FROM employees WHERE ? AND ?";
         const post = [{first_name : firstName}, {last_name : lastName}];
-        connection.query(queryString, post, (err, results) => {
+        this.connection.query(queryString, post, (err, results) => {
              if (err) throw err;
         });
     }
@@ -89,7 +96,8 @@ class EmployeeTrackerSql {
     }
 
     viewEmployees() {
-        const queryString = "SELECT * FROM employees";
+        let queryString = "SELECT e.first_name, e.last_name, roles.title AS role, roles.salary, departments.name AS department, IFNULL (CONCAT(m.first_name, ' ', m.last_name), NULL) AS manager FROM employees e";
+        queryString += " LEFT JOIN roles ON e.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id LEFT JOIN employees m ON e.manager_id = m.id";
         return new Promise((resolve, reject) => {
             this.connection.query(queryString, (err, results) => {
                 if (err) return reject(err);
@@ -98,33 +106,43 @@ class EmployeeTrackerSql {
         });
     }
 
+    //assumes there are no two employees with same firstName and lastName
     updateEmployeeRole(firstName, lastName, title) {
-        const queryString = "SELECT (id) FROM roles WHERE ?";
-        this.connection.query(queryString, [{title : title}], (err, results) => {
-            if (err) throw err;
-            const roleId = results[0];
-            queryString = "UPDATE employees SET ? WHERE ? AND ?";
-            this.connection.query(queryString, [{role_id : roleId}, {first_name : firstName}, {last_name : last_name}], (err, results) => {
-                if (err) throw err;
+        return new Promise((resolve, reject) => {
+            let queryString = "SELECT (id) FROM roles WHERE ?";
+            this.connection.query(queryString, [{title : title}], (err, results) => {
+                if (err) return reject(err);
+                const roleId = results[0].id;
+                queryString = "UPDATE employees SET ? WHERE ? AND ?";
+                this.connection.query(queryString, [{role_id : roleId}, {first_name : firstName}, {last_name : lastName}], (err, results) => {
+                    if (err) return reject(err);
+                    resolve();
+                });
             });
-        });    
+        });
     }
 
+    //assumes there are no two employees with same firstName and lastName
     updateEmployeeManager(firstName, lastName, managerFirstName, managerLastName) {
-        const queryString = "SELECT (id) FROM employees WHERE ?";
-        this.connection.query(queryString, [{first_name : managerFirstName}, {last_name : managerLastName}], (err, results) => {
-            if (err) throw err;
-            const managerId = results[0];
-            queryString = "UPDATE employees SET ? WHERE ? AND ?";
-            this.connection.query(queryString, [{manager_id : managerId}, {first_name : firstName}, {last_name : last_name}], (err, results) => {
-                if (err) throw err;
+        console.log(firstName, lastName, managerFirstName, managerLastName);
+        return new Promise((resolve, reject) => {
+            let queryString = "SELECT (id) FROM employees WHERE ?";
+            this.connection.query(queryString, [{first_name : managerFirstName}, {last_name : managerLastName}], (err, results) => {
+                if (err) return reject();
+                const managerId = results[0].id;
+                queryString = "UPDATE employees SET ? WHERE ? AND ?";
+                this.connection.query(queryString, [{manager_id : managerId}, {first_name : firstName}, {last_name : lastName}], (err, results) => {
+                    if (err) return reject();
+                    resolve();
+                });
             });
-        });        
+        });
     }
 
     viewEmployeesByManager(managerFirstName, managerLastName) {
+        console.log(managerFirstName, managerLastName);
         return new Promise((resolve, reject) => {
-            const queryString = "SELECT (id) FROM employees WHERE ? AND ?";
+            let queryString = "SELECT (id) FROM employees WHERE ? AND ?";
             this.connection.query(queryString, [{"first_name" : managerFirstName}, {"last_name" : managerLastName}], (err, results) => {
                 if (err) return reject(err);
                 queryString = "SELECT * from employees WHERE ?";
@@ -150,12 +168,33 @@ class EmployeeTrackerSql {
         });
     }
 
-    viewManagersByDepartment(departmentName) {
+    viewManagers() {
         return new Promise((resolve, reject) => {
-            const queryString = "SELECT (employees.first_name, employees.last_name FROM employees LEFT JOIN roles ON ? LEFT JOIN departments ON ? WHERE ? AND employees.manager_id IS NULL";
-            this.connection.query(queryString, [{"employees.role_id" : "roles.id"}, {"roles.department_id" : "departments.id"}, {"departments.name" : departmentName}], (err, results) => {
+            const queryString = "SELECT CONCAT(employees.first_name, ' ', employees.last_name) AS manager FROM employees WHERE employees.manager_id IS NULL";
+            this.connection.query(queryString, (err, results) => {
                 if (err) return reject(err);
                 resolve(results);
+         });
+     });        
+    }
+
+    viewManagersByDepartmentId(departmentId) {
+        return new Promise((resolve, reject) => {
+               const queryString = "SELECT employees.first_name, employees.last_name FROM employees LEFT JOIN roles ON employees.role_id=roles.id LEFT JOIN departments ON roles.department_id = departments.id WHERE departments.id = ? AND employees.manager_id IS NULL";
+               this.connection.query(queryString, departmentId, (err, results) => {
+                    if (err) return reject(err);
+                    resolve(results);
+            });
+        });
+    }
+
+    getEmployeeDepartmentId(firstName, lastName) {
+        return new Promise((resolve, reject) => {
+            let queryString = "SELECT departments.id FROM employees LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id";
+            queryString += " WHERE first_name = ? AND last_name = ?";
+            this.connection.query(queryString, [firstName, lastName], (err, results) => {
+                if (err) return reject(err);
+                resolve(results[0].id);
             });
         });
     }
