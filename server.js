@@ -59,36 +59,29 @@ const employeeQuestions = [
 
 const prompt = async (employeeTrackerSql) => {
     inquirer.prompt(entryPointQuestion).then(async (answers) => {
-        console.log(`prompt2`);
         switch (answers.entryPoint) {
             case `view all departments`: {
-                employeeTrackerSql.viewDepartments()
-                .then((results) => {
-                    console.log(`\n`);
-                    console.table(results);
-                });
+                const departments = await employeeTrackerSql.viewDepartments();
+                console.log(`\n`);
+                console.table(departments);
                 break;
             }
             case `view all roles`: {
-                employeeTrackerSql.viewRoles()
-                .then((results) => {
-                    console.log(`\n`);
-                    console.table(results);
-                });
+                const roles = await employeeTrackerSql.viewRoles();
+                console.log(`\n`);
+                console.table(roles);
                 break;
             }
             case `view all employees`: {
-                employeeTrackerSql.viewEmployees()
-                .then((results) => {
-                    console.log(`\n`);
-                    console.table(results);
-                });     
+                const employees = await employeeTrackerSql.viewEmployees();
+                console.log(`\n`);
+                console.table(employees);                
                 break;
             }
             case `add department`: {
                 const answers = await inquirer.prompt([departmentQuestion]);
                 if (answers.departmentName) {
-                    employeeTrackerSql.addDepartment(answers.departmentName);
+                    await employeeTrackerSql.addDepartment(answers.departmentName);
                 }
                 break;
             }
@@ -135,8 +128,7 @@ const prompt = async (employeeTrackerSql) => {
                 });
 
                 const employeeManagerNames = answers.manager.split(` `);
-                await employeeTrackerSql.addEmployee(firstName, lastName, title,
-                                                        employeeManagerNames[0], employeeManagerNames[1]);
+                await employeeTrackerSql.addEmployee(firstName, lastName, title, employeeManagerNames[0], employeeManagerNames[1]);
                 break;
             }
             case `update employee role`: {
@@ -212,14 +204,10 @@ const prompt = async (employeeTrackerSql) => {
                     choices: managerNames
                 });
 
-                selectedManagerArray = answers.manager.split(` `);
-                //const managerFirstName = answers.managerFirstName;
-                //const managerLastName = answers.managerLastName;
-                
-                await employeeTrackerSql.viewEmployeesByManager(selectedManagerArray[0], selectedManagerArray[1], (results) => {
-                    console.log(`\n`);
-                    console.table(results);
-                });
+                selectedManagerArray = answers.manager.split(` `);                
+                const employees = await employeeTrackerSql.viewEmployeesByManager(selectedManagerArray[0], selectedManagerArray[1]);
+                console.log(`\n`);
+                console.table(employees);
                 break;
             }
             case `delete department`: {
@@ -232,20 +220,20 @@ const prompt = async (employeeTrackerSql) => {
                     choices: departmentNames
                 });
 
-                employeeTrackerSql.removeDepartment(answers.department);
+                await employeeTrackerSql.removeDepartment(answers.department);
                 break;
             }
             case `delete role`: {
                 const roles = await employeeTrackerSql.viewRoles();
-                const titles = departments.map((role) => {return role.title});
+                const titles = roles.map((role) => {return role.title});
                 const answers = await inquirer.prompt({
-                    type: `input`,
+                    type: `list`,
                     name: `title`,
-                    message: `which title do you intend to delete?`,
+                    message: `which role do you intend to delete?`,
                     choices: titles
                 });
 
-                employeeTrackerSql.removeRole(answers.title);
+                await employeeTrackerSql.removeRole(answers.title);
                 break;
             }
             case `delete employee`: {
@@ -253,27 +241,27 @@ const prompt = async (employeeTrackerSql) => {
                 const employeeNames = employees.map((employee) => {return `${employee.first_name} ${employee.last_name}`});
 
                 answers = await inquirer.prompt({
-                    type: `input`,
+                    type: `list`,
                     name: `employee`,
                     message: `what is the name of the employee?`,
                     choices: employeeNames
                 });
 
-                const employeeNamesArray = answers.employee.split();
-                employeeTrackerSql.removeEmployee(employeeNamesArray[0], employeeNamesArray[1]);
+                const employeeNamesArray = answers.employee.split(` `);
+                await employeeTrackerSql.removeEmployee(employeeNamesArray[0], employeeNamesArray[1]);
                 break;
             }
             case `view total utilized department budget`: {
                 const departments = await employeeTrackerSql.viewDepartments();
                 const departmentNames = departments.map((department) => {return department.name});
                 const answers = await inquirer.prompt({
-                    type: `input`,
+                    type: `list`,
                     name: `department`,
                     message: `which department?`,
                     choices: departmentNames
                 });
 
-                const departmentBudget = employeeTrackerSql.viewDepartmentBudget(answers.departmentName);
+                const departmentBudget = await employeeTrackerSql.viewDepartmentBudget(answers.department);
                 console.log(departmentBudget);
                 break;
             }

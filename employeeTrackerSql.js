@@ -7,11 +7,14 @@ class EmployeeTrackerSql {
    }
    
    addDepartment(name) {
-       const queryString = "INSERT INTO departments SET ?";
-       const post = {name : name};
-       this.connection.query(queryString, post, (err, results) => {
-            if (err) throw err;
-       });
+        return new Promise((resolve, reject) => {
+            const queryString = "INSERT INTO departments SET ?";
+            const post = {name : name};
+            this.connection.query(queryString, post, (err, results) => {
+                    if (err) return reject(err);
+                    resolve();
+            });
+        });
    }
 
     addRole(title, salary, departmentName) {
@@ -52,26 +55,34 @@ class EmployeeTrackerSql {
     }
 
     removeDepartment(name) {
-        const queryString = "DELETE FROM departments WHERE ?";
-        const post = {name : name};
-        this.connection.query(queryString, post, (err, results) => {
-             if (err) throw err;
+        return new Promise((resolve, reject) => { 
+            const queryString = "DELETE FROM departments WHERE name = ?";
+            this.connection.query(queryString, [name], (err, results) => {
+                if (err) return reject(err);
+                resolve();
+            });
         });
     }
 
     removeRole(title) {
-        const queryString = "DELETE FROM roles WHERE ?";
-        const post = {title : title};
-        this.connection.query(queryString, post, (err, results) => {
-             if (err) throw err;
+        console.log(title);
+        return new Promise((resolve, reject) => {
+            const queryString = "DELETE FROM roles WHERE title = ?";
+            this.connection.query(queryString, [title], (err, results) => {
+                if (err) return reject(err);
+                resolve();
+            });
         });
     }
 
     removeEmployee(firstName, lastName) {
-        const queryString = "DELETE FROM employees WHERE ? AND ?";
-        const post = [{first_name : firstName}, {last_name : lastName}];
-        this.connection.query(queryString, post, (err, results) => {
-             if (err) throw err;
+        return new Promise((resolve, reject) => {
+            const queryString = "DELETE FROM employees WHERE first_name = ? AND last_name = ?";
+            const post = [firstName, lastName];
+            this.connection.query(queryString, post, (err, results) => {
+                if (err) return reject(err);
+                resolve();
+            });
         });
     }
 
@@ -86,7 +97,7 @@ class EmployeeTrackerSql {
     }
 
     viewRoles() {
-        const queryString = "SELECT * FROM roles";
+        const queryString = "SELECT title, salary, departments.name AS department FROM roles LEFT JOIN departments ON roles.department_id = departments.id";
         return new Promise((resolve, reject) => {
             this.connection.query(queryString, (err, results) => {
                 if (err) return reject(err);
@@ -140,30 +151,30 @@ class EmployeeTrackerSql {
     }
 
     viewEmployeesByManager(managerFirstName, managerLastName) {
-        console.log(managerFirstName, managerLastName);
         return new Promise((resolve, reject) => {
-            let queryString = "SELECT (id) FROM employees WHERE ? AND ?";
-            this.connection.query(queryString, [{"first_name" : managerFirstName}, {"last_name" : managerLastName}], (err, results) => {
+            let queryString = "SELECT e.first_name, e.last_name, roles.title AS role, roles.salary, departments.name AS department, IFNULL (CONCAT(m.first_name, ' ', m.last_name), NULL) AS manager FROM employees e";
+            queryString += " LEFT JOIN roles ON e.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id LEFT JOIN employees m ON e.manager_id = m.id WHERE  m.first_name = ? AND m.last_name = ?";                
+            this.connection.query(queryString, [managerFirstName, managerLastName], (err, results) => {
                 if (err) return reject(err);
-                queryString = "SELECT * from employees WHERE ?";
-                this.connection.query(queryString, [{manager_id : results[0].id}], (err, results) => {
-                    if (err) return reject(err);
-                    resolve(results);
-                });
+                resolve(results);
             });
-        });       
+        });    
     }
 
     /*
     View the total utilized budget of a department -- ie the combined salaries of all employees in that department
     */
     viewDepartmentBudget(departmentName) {
-        const queryString = "SELECT (roles.salary) FROM employees LEFT JOIN roles ON ? LEFT JOIN departments ON ? WHERE ?";
-        this.connection.query(queryString, [{"employees.role_id" : "roles.id"}, {"roles.department_id" : "departments.id"}, {"department.names" : "R&D"}], (err, results) => {
-            const sum = 0;
-            if (err) throw err;
-            results.forEach((employeeSalary) => {
-                sum += employeeSalary;
+        console.log(departmentName);
+        return new Promise((resolve, reject) => {
+            const queryString = "SELECT (roles.salary) FROM employees LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id WHERE ?";
+            this.connection.query(queryString, [{"departments.name" : departmentName}], (err, results) => {
+                let sum = 0;
+                if (err) return reject(err);
+                results.forEach((employee) => {
+                    sum += employee.salary;
+                });
+                resolve(sum);
             });
         });
     }
