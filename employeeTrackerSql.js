@@ -35,12 +35,12 @@ class EmployeeTrackerSql {
     addEmployee(firstName, lastName, title, managerFirstName, managerLastName) {
         console.log(firstName, lastName, title, managerFirstName, managerLastName);
         return new Promise((resolve, reject) => { 
-            let queryString = "SELECT (id) FROM roles WHERE ?";
-            this.connection.query(queryString, {title : title}, (err, results) => {
+            let queryString = "SELECT (id) FROM roles WHERE title = ?";
+            this.connection.query(queryString, [title], (err, results) => {
                 if (err) return reject(err);
                 const roleId = results[0].id;
-                queryString = "SELECT (id) FROM employees WHERE ? AND ?";
-                this.connection.query(queryString, [{first_name : managerFirstName}, {last_name : managerLastName}], (err, results) => {
+                queryString = "SELECT (id) FROM employees WHERE first_name = ? AND last_name = ?";
+                this.connection.query(queryString, [managerFirstName, managerLastName], (err, results) => {
                     if (err) return reject(err);
                     const managerId = results[0].id;
                     const queryString = "INSERT INTO employees SET ?";
@@ -191,7 +191,7 @@ class EmployeeTrackerSql {
 
     viewManagersByDepartmentId(departmentId) {
         return new Promise((resolve, reject) => {
-               const queryString = "SELECT employees.first_name, employees.last_name FROM employees LEFT JOIN roles ON employees.role_id=roles.id LEFT JOIN departments ON roles.department_id = departments.id WHERE departments.id = ? AND employees.manager_id IS NULL";
+               const queryString = "SELECT employees.first_name, employees.last_name FROM employees LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id WHERE departments.id = ? AND employees.manager_id IS NULL";
                this.connection.query(queryString, departmentId, (err, results) => {
                     if (err) return reject(err);
                     resolve(results);
@@ -199,6 +199,16 @@ class EmployeeTrackerSql {
         });
     }
 
+    viewManagersByDepartmentName(department) {
+        return new Promise((resolve, reject) => {
+               const queryString = "SELECT employees.first_name, employees.last_name FROM employees LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id WHERE departments.name = ? AND employees.manager_id IS NULL";
+               this.connection.query(queryString, department, (err, results) => {
+                    if (err) return reject(err);
+                    resolve(results);
+            });
+        });
+    }
+    
     getEmployeeDepartmentId(firstName, lastName) {
         return new Promise((resolve, reject) => {
             let queryString = "SELECT departments.id FROM employees LEFT JOIN roles ON employees.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id";

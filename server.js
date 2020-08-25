@@ -116,8 +116,8 @@ const prompt = async (employeeTrackerSql) => {
                 });
 
                 const title = answers.title;
-                const {department_id} = roles.find((role) => {return (role.title === title)});                    
-                const managers = await employeeTrackerSql.viewManagersByDepartmentId(department_id);
+                const {department} = roles.find((role) => {return (role.title === title)});             
+                const managers = await employeeTrackerSql.viewManagersByDepartmentName(department);
                 const managerNames = managers.map((manager) => {return `${manager.first_name} ${manager.last_name}`});
                 
                 answers = await inquirer.prompt({
